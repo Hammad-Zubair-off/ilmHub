@@ -37,6 +37,10 @@ app.use("/api/users", usersRoute);
 app.use("/api/exams", examsRoute);
 app.use("/api/reports", resportsRoute);
 
+app.get("/", (req, res) => {
+  res.send("Quiz API is running");
+});
+
 // Only enable Swagger in development
 if (process.env.NODE_ENV !== "production") {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
