@@ -32,13 +32,7 @@ const resportsRoute = require("./routes/reportsRoute");
 
 // Health check route
 app.get('/', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'Quiz API is running',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
+  res.send("Quiz API is running");  
 });
 
 // API routes
