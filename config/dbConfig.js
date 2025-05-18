@@ -5,19 +5,39 @@ if (!process.env.MONGO_URL) {
   process.exit(1);
 }
 
-mongoose.connect(process.env.MONGO_URL)
-  .then(() => {
-    console.log("MongoDB Connection Successful");
-  })
-  .catch((err) => {
+const connectDB = async () => {
+  try {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGO_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log("MongoDB Connection Successful");
+    }
+  } catch (err) {
     console.error("MongoDB Connection Failed:", err.message);
-    process.exit(1);
-  });
+  }
+};
 
-const connection = mongoose.connection;
-
-connection.on("error", (err) => {
+// Handle connection events
+mongoose.connection.on("error", (err) => {
   console.error("MongoDB Connection Error:", err.message);
 });
 
-module.exports = connection;
+mongoose.connection.on("disconnected", () => {
+  console.log("MongoDB Disconnected");
+});
+
+// Handle process termination
+process.on("SIGINT", async () => {
+  try {
+    await mongoose.connection.close();
+    console.log("MongoDB Connection Closed");
+    process.exit(0);
+  } catch (err) {
+    console.error("Error closing MongoDB connection:", err);
+    process.exit(1);
+  }
+});
+
+module.exports = connectDB;

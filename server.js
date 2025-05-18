@@ -7,10 +7,14 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { errorHandler } = require('./middlewares/errorHandler');
 const logger = require('./config/logger');
+const connectDB = require('./config/dbConfig');
 const swaggerDocument = YAML.load('./swagger.yaml');
 
 // Load .env file from root directory
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 
@@ -21,8 +25,6 @@ app.use(express.urlencoded({extended: true }));
 
 // Request logging
 app.use(morgan('combined', { stream: logger.stream }));
-
-const dbConfig = require("./config/dbConfig");
 
 const usersRoute = require("./routes/usersRoute");
 const examsRoute = require("./routes/examsRoute");
@@ -49,17 +51,6 @@ if (process.env.NODE_ENV !== "production") {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 }
 
-const port = process.env.PORT || 5001;
-
-__dirname = path.resolve();
-
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client" , "build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-  });   
-} 
-
 // Error handling middleware
 app.use(errorHandler);
 
@@ -67,16 +58,21 @@ app.use(errorHandler);
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION! 💥 Shutting down...');
   logger.error(err.name, err.message);
-  process.exit(1);
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   logger.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   logger.error(err.name, err.message);
-  process.exit(1);
 });
 
-app.listen(port, () => {
-  logger.info(`Server listening on port ${port}`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 5001;
+  app.listen(port, () => {
+    logger.info(`Server listening on port ${port}`);
+  });
+}
+
+// Export the Express API
+module.exports = app;
