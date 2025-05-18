@@ -19,12 +19,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended: true }));
 
+// Request logging
+app.use(morgan('combined', { stream: logger.stream }));
+
 const dbConfig = require("./config/dbConfig");
 
 const usersRoute = require("./routes/usersRoute");
 const examsRoute = require("./routes/examsRoute");
 const resportsRoute = require("./routes/reportsRoute");
 
+// Health check route
+app.get('/', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Quiz API is running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// API routes
 app.use("/api/users", usersRoute);
 app.use("/api/exams", examsRoute);
 app.use("/api/reports", resportsRoute);
