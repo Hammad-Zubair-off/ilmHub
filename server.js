@@ -15,7 +15,11 @@ const app = express();
 // Security middleware
 // app.use(securityHeaders);
 // app.use(limiter);
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({extended: true }));
 
@@ -44,12 +48,25 @@ if (process.env.NODE_ENV !== "production") {
 
 const port = process.env.PORT || 5001;
 
-__dirname = path.resolve();
-
+// Fix the static file serving path
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client" , "build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  // Get the absolute path to the client build directory
+  const clientBuildPath = path.join(__dirname, '..', 'client1', 'build');
+  console.log('Client build path:', clientBuildPath); // Debug log
+
+  // Serve static files from the build directory
+  app.use(express.static(clientBuildPath));
+  
+  // Handle all other routes
+  app.get('*', (req, res) => {
+    const indexPath = path.join(clientBuildPath, 'index.html');
+    console.log('Serving index from:', indexPath); // Debug log
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).send('Error loading the application');
+      }
+    });
   });   
 } 
 
@@ -103,6 +120,11 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   }
 });
+
+app.get("/",(req,res)=>
+{
+  res.send("api");
+})
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
